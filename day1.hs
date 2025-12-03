@@ -29,4 +29,3 @@ main = do
   contents <- readFile . head $ path
   putStrLn ("part 1: " ++ result rotate1 contents)
   putStrLn ("part 2: " ++ result rotate2 contents)
-
