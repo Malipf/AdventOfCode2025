@@ -1,40 +1,48 @@
 import System.Environment (getArgs)
 
 getCell :: [String] -> (Int, Int) -> Char
-getCell grid (x,y) = grid!!y!!x
+getCell grid (x,y) = grid !! y !! x
 
-getAdjecents :: [String] -> (Int, Int) -> (Int, Int) -> String
-getAdjecents grid borders = map (getCell grid) . adjecents borders
+getAdjacents :: [String] -> (Int, Int) -> (Int, Int) -> String
+getAdjacents grid bounds = map (getCell grid) . adjacents bounds
 
-adjecents :: (Int,Int) -> (Int,Int) -> [(Int,Int)]
-adjecents (ax,bx) (a,b) = [(x,y)|x <- [a-1..a+1], x<=ax && x>=0, y <- [b-1..b+1], y<=bx, y>=0]
+adjacents :: (Int,Int) -> (Int,Int) -> [(Int,Int)]
+adjacents (ax,bx) (a,b) =
+  [ (x,y)
+  | x <- [a-1..a+1], x<=ax && x>=0
+  , y <- [b-1..b+1], y<=bx && y>=0
+  ]
 
 countRolls :: String -> Int
-countRolls [] = 0
-countRolls (x:xs) = if x == '@' then 1 + countRolls xs else countRolls xs
+countRolls = length . filter (== '@')
 
-borders :: [String] -> (Int, Int)
-borders grid = (length (head grid) - 1, length grid - 1)
+bounds :: [String] -> (Int, Int)
+bounds grid = (length (head grid) - 1, length grid - 1)
 
 getRolls :: (Int, Int) -> [String] -> [(Int, Int)]
-getRolls (a,b) grid = [(x,y)|x <- [0..a], y <- [0..b], getCell grid (x,y) == '@']
+getRolls (a,b) grid =
+  [ (x,y)
+  | x <- [0..a]
+  , y <- [0..b]
+  , getCell grid (x,y) == '@'
+  ]
 
-getAdjecentCounts  :: [String] -> [Int]
-getAdjecentCounts =
+getAdjacentCounts  :: [String] -> [Int]
+getAdjacentCounts =
   liftA2 map
-    (\g -> countRolls . getAdjecents g (borders g))
-    (\g -> getRolls (borders g) g)
+    (\g -> countRolls . getAdjacents g (bounds g))
+    (\g -> getRolls (bounds g) g)
 
 inverse :: ([a],[b]) -> [(a,b)]
 inverse ([],[]) = []
-inverse (x:xs, y:ys) = (x,y) : inverse (xs, ys)
+inverse (xs, ys) = zip xs ys
 
 removables :: [String] -> [(Int,Int)]
 removables =
     map fst
       . filter ((< 5) . snd)
       . inverse
-      . liftA2 (,) (\g -> getRolls (borders g) g) getAdjecentCounts
+      . liftA2 (,) (\g -> getRolls (bounds g) g) getAdjacentCounts
 
 removeRoll :: (Int,Int) -> [String] -> [String]
 removeRoll (x,y) grid  =
@@ -56,7 +64,7 @@ main :: IO ()
 main = do
   args <- getArgs
   content <- readFile . head $ args
-  let l = lines content
-  putStrLn ("part 1: " ++ (show . length . removables $ l))
-  putStrLn ("part 2: " ++ (show . snd . loop l $ 0))
+  let grid = lines content
+  putStrLn ("part 1: " ++ (show . length . removables $ grid))
+  putStrLn ("part 2: " ++ (show . snd . loop grid $ 0))
 
